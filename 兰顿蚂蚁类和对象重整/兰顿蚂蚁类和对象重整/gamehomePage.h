@@ -4,8 +4,10 @@
 #include "user.h"
 #include "levelMode.h"
 #include "freedomMode.h"
+#include"funMode.h"
 
-class GameHomepage {
+class GameHomepage
+{
 public:
     GameHomepage();
     void beginGame();
@@ -14,6 +16,7 @@ public:
 private:
     freedomMode freedommode;
     LevelMode levelMode;
+    funMode funmode;
 };
 
 #endif

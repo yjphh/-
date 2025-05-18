@@ -89,13 +89,41 @@ bool User::forgotPassword()
 
 bool User::userLogin( std::string& _password) 
 {
+    // 检查用户名是否在 allUsername.txt 中，如果文件不存在则创建
+    bool usernameExists = false;
+    std::ifstream inFile("allUsername.txt");
+
+    // 如果文件存在，检查用户名是否已存在
+    if (inFile.is_open()) {
+        std::string _username;
+        while (inFile >> _username) {
+            if (_username == username) {
+                usernameExists = true;
+                break;
+            }
+        }
+        inFile.close();
+    }
+
+    // 如果用户名不存在，写入 allUsername.txt
+    if (!usernameExists) {
+        std::ofstream outFile("allUsername.txt", std::ios::app);
+        if (!outFile.is_open()) {
+            std::cout << "无法创建或写入 allUsername.txt" << std::endl;
+            return false;
+        }
+        outFile << username << std::endl;
+        outFile.close();
+    }
+
+
     int attempts = 3;
     while (attempts > 0)
     {
         std::string filename = username + ".txt";
         std::ifstream inFile(filename);
         if (!inFile.is_open()) {
-            std::cout << "登录失败！用户未注册。" << std::endl;
+            std::cout << "登录失败！用户未注册" << std::endl;
             return false;
         }
 
@@ -223,7 +251,8 @@ void User::printAllRecordsFromFile(const std::string& _username) {
         double time, accuracy;
 
         // 按顺序解析字段
-        if (iss >> name >> stage >> diff >> time >> accuracy) {
+        if (iss >> name >> stage >> diff >> time >> accuracy)
+        {
             // 读取时间戳（剩余部分作为整体）
             std::getline(iss >> std::ws, timestamp);  // std::ws 跳过前导空格
 
@@ -235,7 +264,13 @@ void User::printAllRecordsFromFile(const std::string& _username) {
     readFile.close();
     int a = 1;
     std::cout << "该用户所有闯关记录如下：" << std::endl;
-    for (auto record : Records) {
+    if (Records.empty())
+    {
+        std::cout << "该用户暂无闯关记录！" << std::endl;
+        return;
+    }
+    for (auto record : Records)
+    {
         std::cout << a++ << "、";
         std::cout << "用户:" << std::setw(6) << std::left << record.username << " ";  // 固定用户名宽度
         std::cout << "关卡:第" << std::setw(1) << record.stage << "关" << " ";

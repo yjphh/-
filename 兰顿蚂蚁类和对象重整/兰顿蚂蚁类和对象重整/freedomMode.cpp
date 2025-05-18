@@ -374,10 +374,11 @@ int freedomMode::freeMode(User& user)
     std::cout << "有一个由黑白格组成的正方形棋盘（0代表白格，1代表黑格）和一只蚂蚁" << std::endl;
     std::cout << "若蚂蚁在白格上，白->黑，右转90°并前进一格" << std::endl;
     std::cout << "若蚂蚁在黑格上，黑->白，左转90°并前进一格" << std::endl;
+    std::cout << "本模式由你和电脑协作出题，每道题具有个人独特性，可选择性存入题库供你和其他用户查看" << std::endl;
     std::cout << "蚂蚁走过n步形成蚁行图，你要根据蚁行图回溯出棋盘初始状态方为作答完毕" << std::endl;
     std::cout << "——————————————————————————————————————————" << std::endl;
     std::cout << std::endl;
-    std::cout << "请注意：本模式下，电脑会根据您输入的棋盘边长随机生成棋盘格子，您还需输入蚂蚁的初始位置和朝向和走过步数，电脑检测输入有效后会打印蚁行图供您作答" << std::endl;
+    std::cout << "请注意：本模式下，电脑会根据您输入的棋盘边长随机生成棋盘格子，您还需输入蚂蚁的初始位置、初始朝向、走过步数，电脑检测输入有效后会打印蚁行图供您作答" << std::endl;
     int size = 0;
     int steps = 0;
     while (true) {
@@ -488,7 +489,7 @@ int freedomMode::freeMode(User& user)
                             for (int i = 0; i < size * size; ++i) {
                                 answer.push_back(game.initialBoard[i]);
                             }
-                            std::string username1 = user.getUsername();
+                            std::string username1 = user.getUsername();//该函数传参作用
                             if (game.SavetoFile(username1, steps, finalX, finalY,finalHeading, arr,answer))
                             {
                                 std::cout << "存档成功！" << std::endl;

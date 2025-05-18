@@ -112,6 +112,7 @@ void GameHomepage::chooseMode(User& user)
     std::cout << "请选择游戏模式" << std::endl;
     std::cout << "1. 自由模式" << std::endl;
     std::cout << "2. 闯关模式" << std::endl;
+    std::cout << "3. 趣味模式" << std::endl;
     std::cout << "请输入你想参加的模式对应的序号" << std::endl;
     std::cout << std::endl;
     int choice;
@@ -186,9 +187,43 @@ void GameHomepage::chooseMode(User& user)
         }
         break;
     }
+    case 3:
+    {
+        funmode.chooseMap();
+        while (!shouldExit)
+        {
+            std::cout << "请输入接下来的操作：" << std::endl;
+            std::cout << "1、再玩一次本模式" << std::endl;
+            std::cout << "2、退出该模式并回到主页面 " << std::endl;
+            std::cout << "3、退出游戏 " << std::endl;
+            std::cin >> input;
+            switch (input)
+            {
+            case 1:
+            {
+                funmode.chooseMap();
+                break;
+            }
+            case 2:
+            {
+                GameHomepage homepage2;
+                homepage2.beginGame();
+                shouldExit = true;
+                break;
+            }
+            case 3:
+            {
+                std::cout << "游戏已退出，欢迎下次再来！" << std::endl;
+                shouldExit = true;
+                break;
+            }
+            }
+        }
+        break;
+    }
     default:
     {
-        std::cout << "输入无效，请重新选择。" << std::endl;
+        std::cout << "输入无效，请重新选择" << std::endl;
         chooseMode(user);
     }
     }
