@@ -793,19 +793,3 @@ void LevelMode::chooseStage(User& user)
         std::cin >> choice1;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

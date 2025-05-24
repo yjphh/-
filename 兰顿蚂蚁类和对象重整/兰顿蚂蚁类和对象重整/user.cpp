@@ -37,7 +37,7 @@ void User::userRegister(const std::string& _username,const std::string& _passwor
     std::string filename = username + ".txt";
     std::ofstream outFile(filename);
     if (outFile.is_open()) {
-        outFile << _password << std::endl;//1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+        outFile << _password << std::endl;
 
         std::cout << "注册成功" << std::endl;
         outFile.close();
@@ -71,7 +71,7 @@ bool User::forgotPassword()
         lines.push_back(line);
     }
     inFile.close();
-    std::ofstream outFile(filename);//11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+    std::ofstream outFile(filename);
     if (!outFile.is_open())
     {
         std::cout << "无法打开文件进行写入" << std::endl;
@@ -191,7 +191,7 @@ void User::addRecord(const GameRecord& record)
     recordwithTime.timestamp = time_stream.str();
 
     records.push_back(recordwithTime);
-    std::ofstream outFile(username + ".txt",std::ios::app);//11111111111111111111111111111111111111111111111111111111111111111111111
+    std::ofstream outFile(username + ".txt",std::ios::app);
     if (outFile.is_open())
     {
         outFile <<username << " ";

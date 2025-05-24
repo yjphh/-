@@ -3,30 +3,70 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include<algorithm>//reverse
 using namespace std;
 
 // 构造函数：初始化通用属性
 funMode::funMode() {
     srand(time(0));
-    size = rand() % 3 + 3; // 默认棋盘大小为4x4（可调整）
+    size = rand() % 3 + 3; // 默认棋盘大小为3*3到5*5（可调整）
     initBoard();
     initObstacle();
     resetAnt();
 }
 
+
+//构造函数2，用来初始化觉醒之路
+funMode::funMode(int n)
+{
+    srand(time(0));
+    size = n;//棋盘大小人为控制
+    initBoard();//随机生成棋盘
+    initObstacle(n);//人为控制障碍的数量为棋盘边长，随机分布障碍在棋盘上的位置
+    resetAnt();//随机生成蚂蚁的初始位置、初始朝向、步数用于模拟
+}
+
+void funMode::initObstacle(int n)//随机设置指定数量的障碍，觉醒之路模式
+{
+    obstacle = new char* [n];
+    for (int i = 0; i < n; i++)
+    {
+        obstacle[i] = new char[n];
+        for (int j = 0; j < n; j++)
+        {
+            obstacle[i][j] = ' ';  // 初始化所有位置为空
+        }
+    }
+    // 随机放置 n 个障碍
+    int count = 0;
+    while (count < n)
+    {
+        int x = rand() % n;  // 生成 0 到 n-1 之间的随机数
+        int y = rand() % n;
+
+        if (obstacle[x][y] != '#')  // 如果该位置没有障碍才放，保证一个位置只放一个障碍
+        {
+            obstacle[x][y] = '#';    // 设置为障碍
+            count++;
+        }
+    }
+}
+
+
+
 // 初始化棋盘
 void funMode::initBoard() {
     board = new int* [size];
     originalBoard = new int* [size];
-    correctInitialBoard = new int* [size]; // 新增：正确的初始棋盘
+    finalBoard = new int* [size]; // 正确的初始棋盘
     for (int i = 0; i < size; i++) {
         board[i] = new int[size];
         originalBoard[i] = new int[size];
-        correctInitialBoard[i] = new int[size];
+        finalBoard[i] = new int[size];
         for (int j = 0; j < size; j++) {
             board[i][j] = rand() % 2; // 随机黑白格
             originalBoard[i][j] = board[i][j];
-            correctInitialBoard[i][j] = board[i][j];
+            finalBoard[i][j] = board[i][j];
         }
     }
 }
@@ -42,7 +82,7 @@ void funMode::initObstacle() {
     }
 }
 
-// 重置蚂蚁状态
+// 重置蚂蚁状态，电脑在一定范围内随机生成
 void funMode::resetAnt() {
     antX = rand() % size;
     antY = rand() % size;
@@ -50,7 +90,7 @@ void funMode::resetAnt() {
     steps = rand() % 11 + 5; // 5-15步
 }
 
-// 打印整数棋盘
+// 扭曲世界和碰壁走廊的题目或答案打印函数
 void funMode::printBoard(int** arr) {
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -65,19 +105,11 @@ void funMode::printBoard(int** arr) {
     }
 }
 
-// 打印字符棋盘
-void funMode::printBoard(char** arr) {
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            cout << arr[i][j] << " ";
-        }
-        cout << endl;
-    }
-}
 
-// 输入棋盘状态 - 修改后支持#
-void funMode::inputBoard(int** arr) {
-    cout << "请输入" << size << "x" << size << "的初始棋盘（0=白格，1=黑格，#=障碍）：" << endl;
+// 输入棋盘状态
+void funMode::inputBoard(int** arr) 
+{
+    cout << "请开始作答，输入" << size << "x" << size << "的初始棋盘（0=白格，1=黑格，#=障碍）：" << endl;
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             char cell;
@@ -95,18 +127,20 @@ void funMode::inputBoard(int** arr) {
     }
 }
 
-// 比对棋盘
-bool funMode::compareBoards() {
+// 扭曲世界和碰壁走廊的答案判定函数
+bool funMode::compareBoards(int** arr)//传入的参数是棋盘初始状态，即正确答案
+{
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            if (originalBoard[i][j] != board[i][j]) return false;
+            if (originalBoard[i][j] != arr[i][j]) return false;//这里的originalBoard是用户输入的作答棋盘
         }
     }
     return true;
 }
 
-// 通用模拟函数（扭曲世界模式）
-bool funMode::simulateTwistedWorld() {
+// 模拟函数（扭曲世界模式）
+bool funMode::simulateTwistedWorld() //在初始棋盘的基础上顺序走完步数，看能否得到蚁行图，走的过程不越界就有解，board存储模拟完的蚁行图
+{
     int x = antX, y = antY;
     int dir = antDirection;
     bool turnRight = (originalBoard[x][y] == 0); // 初始转向
@@ -116,11 +150,62 @@ bool funMode::simulateTwistedWorld() {
         board[x][y] = !board[x][y];
 
         // 转向
-        if (turnRight) dir = (dir % 4) + 1; // 右转
-        else dir = (dir + 2) % 4 == 0 ? 4 : (dir + 2) % 4; // 左转
+        if (turnRight)
+        {
+            switch (dir)
+            {
+            case 1:
+            {
+                dir = 4;
+                break;
+            }
+            case 2:
+            {
+                dir = 3;
+                break;
+            }
+            case 3:
+            {
+                dir = 1;
+                break;
+            }
+            case 4:
+            {
+                dir = 2;
+                break;
+            }
+            }
+        }
+        else
+        {
+            switch (dir)
+            {
+            case 1:
+            {
+                dir = 3;
+                break;
+            }
+            case 2:
+            {
+                dir = 4;
+                break;
+            }
+            case 3:
+            {
+                dir = 2;
+                break;
+            }
+            case 4:
+            {
+                dir = 1;
+                break;
+            }
+            }
+        }
 
         // 移动
-        switch (dir) {
+        switch (dir)
+        {
         case 1: y--; break;
         case 2: y++; break;
         case 3: x--; break;
@@ -134,12 +219,15 @@ bool funMode::simulateTwistedWorld() {
         turnRight = !turnRight;
     }
 
-    antX = x; antY = y; antDirection = dir;
+    antX = x; antY = y; antDirection = dir;//将模拟结束后蚂蚁的最终位置和朝向保存
     return true;
 }
 
 // 碰壁走廊模式模拟
-bool funMode::simulateAntsHit() {
+bool funMode::simulateAntsHit()
+{
+    correctPath.clear(); // 清空之前的路径记录
+
     // 复制当前棋盘作为模拟起点
     int** tempBoard = new int* [size];
     for (int i = 0; i < size; i++) {
@@ -152,20 +240,74 @@ bool funMode::simulateAntsHit() {
     int x = antX, y = antY;
     int dir = antDirection;
 
+    correctPath.emplace_back(x, y);//记录起始坐标位置
+
     for (int i = 0; i < steps; i++) {
         // 记录当前格子状态
         int color = tempBoard[x][y];
 
-        // 基础转向（黑白格规则）
-        if (color == 0) dir = (dir % 4) + 1; // 白格右转
-        else dir = (dir + 2) % 4 == 0 ? 4 : (dir + 2) % 4; // 黑格左转
+        // 转向
+        if (color==0)//白格右转
+        {
+            switch (dir)
+            {
+            case 1:
+            {
+                dir = 4;
+                break;
+            }
+            case 2:
+            {
+                dir = 3;
+                break;
+            }
+            case 3:
+            {
+                dir = 1;
+                break;
+            }
+            case 4:
+            {
+                dir = 2;
+                break;
+            }
+            }
+        }
+        else//黑格左转
+        {
+            switch (dir)
+            {
+            case 1:
+            {
+                dir = 3;
+                break;
+            }
+            case 2:
+            {
+                dir = 4;
+                break;
+            }
+            case 3:
+            {
+                dir = 2;
+                break;
+            }
+            case 4:
+            {
+                dir = 1;
+                break;
+            }
+            }
+        }
 
         // 处理障碍和墙（最多尝试4次右转）
         int attempts = 0;
         bool moved = false;
-        while (attempts < 4) {
+        while (attempts < 4)
+        {
             int nx = x, ny = y;
-            switch (dir) {
+            switch (dir) 
+            {
             case 1: ny--; break; // 上
             case 2: ny++; break; // 下
             case 3: nx--; break; // 左
@@ -179,7 +321,30 @@ bool funMode::simulateAntsHit() {
                 break;
             }
 
-            dir = (dir % 4) + 1; // 右转
+            //遇到墙或障碍时就尝试右转
+            switch (dir)
+            {
+            case 1:
+            {
+                dir = 4;
+                break;
+            }
+            case 2:
+            {
+                dir = 3;
+                break;
+            }
+            case 3:
+            {
+                dir = 1;
+                break;
+            }
+            case 4:
+            {
+                dir = 2;
+                break;
+            }
+            }
             attempts++;
         }
 
@@ -196,12 +361,14 @@ bool funMode::simulateAntsHit() {
         if (attempts == 0) { // 没有遇到障碍，正常移动
             tempBoard[x][y] = !tempBoard[x][y];
         }
+
+        correctPath.emplace_back(x, y);//记录移动一步后的坐标位置
     }
 
-    // 保存模拟结果到正确的初始棋盘
+    // 保存模拟结果到最终棋盘
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            correctInitialBoard[i][j] = tempBoard[i][j];
+            finalBoard[i][j] = tempBoard[i][j];
         }
     }
 
@@ -220,135 +387,39 @@ void funMode::generateTwistedQuestion() {
     cout << "\n=== 扭曲世界题目 ===" << endl;
     cout << "棋盘大小：" << size << "x" << size << endl;
     cout << "蚂蚁最终位置：(" << antX << ", " << antY << ")" << endl;
-    cout << "最终朝向：" << antDirection << endl;
+    std::string dire;
+    switch (antDirection)
+    {
+    case 1:
+    {
+        dire = "UP";
+        break;
+    }
+    case 2:
+    {
+        dire = "DOWN";
+        break;
+    }
+    case 3:
+    {
+        dire = "LEFT";
+        break;
+    }
+    case 4:
+    {
+        dire = "RIGHT";
+        break;
+    }
+    }
+    cout << "最终朝向：" << dire << endl;
     cout << "步数：" << steps << endl;
     cout << "最终棋盘：" << endl;
     printBoard(board);
 }
 
-// 生成碰壁走廊题目 - 修改后
-void funMode::generateHitQuestion() {
-    cout << "\n=== 碰壁走廊题目 ===" << endl;
-    cout << "棋盘大小：" << size << "x" << size << endl;
-    cout << "蚂蚁最终位置：(" << antX << ", " << antY << ")" << endl;
-    cout << "最终朝向：" << antDirection << endl;
-    cout << "步数：" << steps << endl;
-    cout << "最终棋盘（含障碍）：" << endl;
-    printBoard(board);
-}
-
-// 验证用户输入的题目是否有效 - 修复后
-bool funMode::validateUserQuestion() {
-    // 检查蚂蚁初始位置是否在棋盘内
-    if (antX < 0 || antX >= size || antY < 0 || antY >= size) {
-        cout << "错误：蚂蚁位置超出棋盘范围！" << endl;
-        return false;
-    }
-
-    // 检查蚂蚁初始位置是否为障碍
-    if (obstacle[antX][antY] == '#') {
-        cout << "错误：蚂蚁初始位置不能是障碍！" << endl;
-        return false;
-    }
-
-    // 复制最终棋盘状态作为模拟起点
-    int** tempBoard = new int* [size];
-    for (int i = 0; i < size; i++) {
-        tempBoard[i] = new int[size];
-        for (int j = 0; j < size; j++) {
-            tempBoard[i][j] = board[i][j];
-        }
-    }
-
-    // 保存当前棋盘状态作为初始棋盘
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            originalBoard[i][j] = board[i][j];
-        }
-    }
-
-    // 模拟蚂蚁移动，检查是否能完成所有步数
-    int x = antX, y = antY;
-    int dir = antDirection;
-
-    // 记录每个位置和方向的访问次数，防止死循环
-    int visited[100][100][5] = { 0 }; // 假设最大棋盘100x100，4个方向+1个备用
-
-    for (int i = 0; i < steps; i++) {
-        int color = board[x][y];
-
-        // 检查是否进入循环
-        if (++visited[x][y][dir] > 4) {
-            cout << "错误：蚂蚁在第" << i + 1 << "步进入了循环！" << endl;
-
-            // 释放临时数组
-            for (int i = 0; i < size; i++) {
-                delete[] tempBoard[i];
-            }
-            delete[] tempBoard;
-
-            return false;
-        }
-
-        // 基础转向
-        if (color == 0) dir = (dir % 4) + 1; // 白格右转
-        else dir = (dir + 2) % 4 == 0 ? 4 : (dir + 2) % 4; // 黑格左转
-
-        // 尝试找到可移动方向
-        int attempts = 0;
-        bool moved = false;
-        while (attempts < 4) {
-            int nx = x, ny = y;
-            switch (dir) {
-            case 1: ny--; break;
-            case 2: ny++; break;
-            case 3: nx--; break;
-            case 4: nx++; break;
-            }
-
-            if (nx >= 0 && nx < size && ny >= 0 && ny < size && obstacle[nx][ny] != '#') {
-                x = nx; y = ny;
-                moved = true;
-                break;
-            }
-
-            dir = (dir % 4) + 1;
-            attempts++;
-        }
-
-        if (!moved) {
-            cout << "错误：蚂蚁在第" << i + 1 << "步无法移动！" << endl;
-
-            // 释放临时数组
-            for (int i = 0; i < size; i++) {
-                delete[] tempBoard[i];
-            }
-            delete[] tempBoard;
-
-            return false;
-        }
-
-        // 反转颜色 - 根据规则修改
-        if (attempts == 0) {
-            board[x][y] = !board[x][y];
-        }
-    }
-
-    // 恢复用户输入的最终棋盘状态
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            board[i][j] = tempBoard[i][j];
-        }
-        delete[] tempBoard[i];
-    }
-    delete[] tempBoard;
-
-    return true;
-}
-
-// 生成用户自定义题目 - 修改后
-void funMode::generateUserQuestion() {
-    cout << "\n=== 用户自定义碰壁走廊题目 ===" << endl;
+// 用户自定义题目
+bool funMode::generateUserQuestion() {
+    cout << "\n=== 用户自定义初始的碰壁走廊 ===" << endl;
     cout << "请输入棋盘大小：";
     cin >> size;
 
@@ -357,26 +428,26 @@ void funMode::generateUserQuestion() {
         delete[] board[i];
         delete[] originalBoard[i];
         delete[] obstacle[i];
-        delete[] correctInitialBoard[i];
+        delete[] finalBoard[i];
     }
     delete[] board;
     delete[] originalBoard;
     delete[] obstacle;
-    delete[] correctInitialBoard;
+    delete[] finalBoard;
 
     initBoard();
     initObstacle();
 
-    cout << "请输入蚂蚁最终位置 (x y)：";
+    cout << "请输入蚂蚁初始位置 (x y)：";
     cin >> antX >> antY;
 
-    cout << "请输入蚂蚁最终朝向 (1=上, 2=下, 3=左, 4=右)：";
+    cout << "请输入蚂蚁初始朝向 (1=UP, 2=DOWN, 3=LEFT, 4=RIGHT)：";
     cin >> antDirection;
 
     cout << "请输入蚂蚁走过的步数：";
-    cin >> steps;
+    cin >> steps;//都是直接修改成员变量
 
-    cout << "请输入含障碍的最终棋盘（" << size << "x" << size << "，0=白格，1=黑格，#=障碍）：" << endl;
+    cout << "请输入含障碍的初始棋盘（" << size << "x" << size << "，0=白格，1=黑格，#=障碍）：" << endl;
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             char cell;
@@ -388,33 +459,51 @@ void funMode::generateUserQuestion() {
             }
             else {
                 obstacle[i][j] = ' ';
-                board[i][j] = (cell == '1') ? 1 : 0;
+                board[i][j] = (cell == '1') ? 1 : 0;//用board存储初始棋盘，即答案
             }
         }
     }
 
-    // 保存最终棋盘状态作为正确初始棋盘的起点
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            correctInitialBoard[i][j] = board[i][j];
-        }
-    }
-
-    // 验证题目有效性
-    if (!validateUserQuestion())
+    // 模拟蚂蚁移动，计算最终棋盘
+    if (!simulateAntsHit()) 
     {
-        cout << "题目无效！请重新开始。" << endl;
-        return;
-    }
+        std::cout << "题目无效，蚂蚁会在某处陷入死循环！" << std::endl;
+        return false;
+    }//经过该模拟，finalBoard存蚁行图，board存答案的初始棋盘
 
     // 显示题目
-    cout << "\n=== 已验证的碰壁走廊题目 ===" << endl;
+    cout << "\n=== 已验证有解的碰壁走廊题目 ===" << endl;
     cout << "棋盘大小：" << size << "x" << size << endl;
     cout << "蚂蚁最终位置：(" << antX << ", " << antY << ")" << endl;
-    cout << "最终朝向：" << antDirection << endl;
+    std::string dire;
+    switch (antDirection)
+    {
+    case 1:
+    {
+        dire = "UP";
+        break;
+    }
+    case 2:
+    {
+        dire = "DOWN";
+        break;
+    }
+    case 3:
+    {
+        dire = "LEFT";
+        break;
+    }
+    case 4:
+    {
+        dire = "RIGHT";
+        break;
+    }
+    }
+    cout << "最终朝向：" << dire << endl;
     cout << "步数：" << steps << endl;
     cout << "最终棋盘（含障碍）：" << endl;
-    printBoard(board);
+    printBoard(finalBoard);
+    return true;
 }
 
 // 析构函数
@@ -423,13 +512,387 @@ funMode::~funMode() {
         delete[] board[i];
         delete[] originalBoard[i];
         delete[] obstacle[i];
-        delete[] correctInitialBoard[i];
+        delete[] finalBoard[i];
     }
     delete[] board;
     delete[] originalBoard;
     delete[] obstacle;
-    delete[] correctInitialBoard;
+    delete[] finalBoard;
 }
+
+void funMode::answerQues()
+{
+    cout << "欢迎来到觉醒之路的答题环节，每答对一题，你将获得一张带有说明书的道具卡！" << endl;
+    obtainedTools.clear();//初始化清空
+
+    int _year1 = 0;
+    cout << "问题1：中国共产党的诞生时间" << endl;
+    cin >> _year1;
+    if (_year1 == year1)
+    {
+        obtainedTools.push_back(ToolType::DES);
+        cout << "恭喜你获得道具卡——暴力拆迁" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+        cout << "          暴力拆迁:" << endl;
+        cout << "开始答题前，选择性拆除部分障碍" << endl;
+        cout << "程序自动更新答案，用户开始作答" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+    }
+    else
+    {
+        cout << "很遗憾！本题未答对" << endl;
+    }
+    cout << endl;
+    int _year2 = 0;
+    cout << "问题2：新中国的成立时间" << endl;
+    cin >> _year2;
+    if (_year2 == year2)
+    {
+        obtainedTools.push_back(ToolType::PRE);
+        cout << "恭喜你获得道具卡——预言大师" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+        cout << "          预言大师:" << endl;
+        cout << "开始答题前，    你可以提前预知" << endl;
+        cout << "最多 6个初始棋盘格子的正确颜色" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+    }
+    else
+    {
+        cout << "很遗憾！本题未答对" << endl;
+    }
+    cout << endl;
+    string _site ;
+    cout << "问题3：中国的首都城市" << endl;
+    cin >> _site;
+    if (_site == site)
+    {
+        obtainedTools.push_back(ToolType::CONS);
+        cout << "恭喜你获得道具卡——蚂蚁有灵" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+        cout << "          蚂蚁有灵:" << endl;
+        cout << "作答期间，  蚂蚁觉醒了自我意识" << endl;
+        cout << "主动纠正已作答，并自动填充 3步" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+    }
+    else
+    {
+        cout << "很遗憾！本题未答对" << endl;
+    }
+    cout << endl;
+    int _rank = 0;
+    cout << "问题4：中国GDP的世界排名" << endl;
+    cin >> _rank;
+    if (_rank == rank)
+    {
+        obtainedTools.push_back(ToolType::BACK);
+        cout << "恭喜你获得道具卡——落子有悔" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+        cout << "          落子有悔:" << endl;
+        cout << "结束答题，系统若检测出答题有误" << endl;
+        cout << "提示你在第几步出错，  再来一次" << endl;
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+    }
+    else
+    {
+        cout << "很遗憾！本题未答对" << endl;
+    }
+}
+
+//生成觉醒之路题目
+bool funMode::generateAwakenRoad()
+{
+    // 生成有效题目 - 添加尝试次数限制
+    std::cout << "正在生成题目...\n";
+    int** realOriginalBoard = new int* [size];
+    for (int i = 0; i < size; i++) {
+        realOriginalBoard[i] = new int[size];
+        for (int j = 0; j < size; j++) {
+            realOriginalBoard[i][j] = originalBoard[i][j];//提前保存正确的初始棋盘
+        }
+    }
+    int maxAttempts = 1000; // 最大尝试次数
+    int attempts = 1;
+    while (!simulateAntsHit() && attempts < maxAttempts)//利用board的临时数组进行模拟，得到finalBoard
+    {
+        resetAnt();//重置蚂蚁的初始位置、初始朝向、步数
+        attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+        std::cout << "无法生成有效题目，请重试！" << std::endl;
+        for (int i = 0; i < size; i++) {
+            delete[] realOriginalBoard[i];
+        }
+        delete[] realOriginalBoard;
+        return false;
+    }
+    std::cout << "有解题目已生成，尝试" << attempts << "次" << std::endl;
+    // 显示棋盘和具体题目信息
+     // 显示题目
+    cout << "\n=== 已验证有解的题目 ===" << endl;
+    cout << "棋盘大小：" << size << "x" << size << endl;
+    cout << "蚂蚁最终位置：(" << antX << ", " << antY << ")" << endl;
+    std::string dire;
+    switch (antDirection)
+    {
+    case 1:
+    {
+        dire = "UP";
+        break;
+    }
+    case 2:
+    {
+        dire = "DOWN";
+        break;
+    }
+    case 3:
+    {
+        dire = "LEFT";
+        break;
+    }
+    case 4:
+    {
+        dire = "RIGHT";
+        break;
+    }
+    }
+    cout << "最终朝向：" << dire << endl;
+    cout << "步数：" << steps << endl;
+    cout << "最终棋盘（含障碍）：" << endl;
+    printBoard(finalBoard);//打印finalBoard和其他题目信息
+
+    // 释放备份棋盘的内存
+    for (int i = 0; i < size; i++) {
+        delete[] realOriginalBoard[i];
+    }
+    delete[] realOriginalBoard;
+
+    return true;
+}
+
+// 选择道具卡（新）
+void funMode::chooseTool() {
+    if (obtainedTools.empty()) {
+        cout << "你还没有获得任何道具卡！\n";
+        return;
+    }
+
+    cout << "\n你已获得的道具卡（可选择多个，用空格分隔序号）：\n";
+    vector<pair<int, ToolType>> toolOptions;
+    for (int i = 0; i < obtainedTools.size(); i++) {
+        ToolType type = obtainedTools[i];
+        string name;
+        switch (type) {
+        case ToolType::BACK:   name = "落子有悔"; break;
+        case ToolType::PRE:    name = "预言大师"; break;
+        case ToolType::CONS:   name = "蚂蚁有灵"; break;
+        case ToolType::DES:    name = "暴力拆迁"; break;
+        default: continue;
+        }
+        toolOptions.emplace_back(i + 1, type);
+        cout << i + 1 << ". " << name << endl;
+    }
+
+    cout << "\n请输入要使用的道具卡序号（如1 3）：(按回车结束选择)";
+    vector<int> selectedIndices;
+    int index;
+    while (cin >> index) {
+        selectedIndices.push_back(index);
+        if (cin.get() == '\n') break;
+    }
+
+    for (int idx : selectedIndices) {
+        if (idx < 1 || idx > toolOptions.size()) {
+            cout << "无效序号：" << idx << endl;
+            continue;
+        }
+        ToolType type = toolOptions[idx - 1].second;
+        useTool(type);
+    }
+}
+
+// 使用单个道具卡
+void funMode::useTool(ToolType type) {
+    switch (type) {
+    case ToolType::BACK:   BackOpera(); break;
+    case ToolType::PRE:    PredictMaster(); break;
+    case ToolType::CONS:   CreatCons(); break;
+    case ToolType::DES:    Destroy(); break;
+    default: break;
+    }
+}
+
+//落子有悔道具卡
+void funMode::BackOpera()
+{
+    cout << "正在使用落子有悔道具卡..." << endl;
+    inputBoard(originalBoard);
+    if (compareBoards(board))
+    {
+        cout << "提前恭喜你回答正确！不需要使用该卡了" << endl;
+        return;
+    }
+    else
+    {
+        cout << "系统提前检测到你的作答有误，现在使用该卡" << endl;
+        //逆序数组
+        reverse(correctPath.begin(), correctPath.end());
+        int step = 0;
+        while (step < correctPath.size())
+        {
+            int x = correctPath[step].first;
+            int y = correctPath[step].second;
+            if (originalBoard[x][y] != board[x][y])
+            {
+                cout << "你在第" << step+1 << "步回溯时就已经发生错误！" << endl;
+                break;
+            }
+            step++;
+        }
+        cout << "再来一次吧" << endl;
+    }
+}
+//预言大师道具卡
+void funMode::PredictMaster()
+{
+    cout << "正在使用预言大师道具卡..." << endl;
+    int counter = 6;
+    while (counter)
+    {
+        cout << "请输入你想查看的答案棋盘某位置的坐标(障碍柱位置已知)" << endl;
+        int x = 0, y = 0;
+        cin >> x >> y;
+        cout << "预言结果如下：" << endl;
+        string ch;
+        if (board[x][y] == 0)
+        {
+            ch = "白";
+        }
+        else
+        {
+            ch = "黑";
+        }
+        cout <<"该格颜色为"<< ch <<"色" << endl;
+        counter--;
+        if (counter)
+        {
+            cout << "你的预言次数未用完，是否继续预言？(yes/no)" << endl;
+            string choice;
+            cin >> choice;
+            if (choice == "yes")
+            {
+                continue;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    cout << "你已知晓了部分格子的正确颜色，快来开始作答吧" << endl;
+}
+
+void funMode::inputBoard(vector<string>& userboard)
+{
+    cout << "请输入" << size << "x" << size << "的初始棋盘（0=白格，1=黑格，#=障碍）：" << endl;
+    cout << "当你输入useTool时，开始使用蚂蚁有灵道具卡" << endl;
+    string ch1;
+    while (cin >> ch1)
+    {
+        if (ch1 == "useTool")
+        {
+            break;
+        }
+        userboard.push_back(ch1);
+    }
+}
+
+//蚂蚁有灵道具卡
+void funMode::CreatCons()
+{
+    // 清空所有相关容器，避免旧数据干扰
+    userBoard.clear();
+    answerBoard.clear();
+    obstacleBoard.clear();
+
+
+
+    inputBoard(userBoard);
+    cout << "正在使用蚂蚁有灵道具卡..." << endl;
+    //将原二维答案数组先降为一维数组
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            char ch2;
+            if (board[i][j] == 0)
+            {
+                ch2 = '0';
+            }
+            else
+            {
+                ch2 = '1';
+            }
+            answerBoard.push_back(ch2);
+            obstacleBoard.push_back(obstacle[i][j]);
+        }
+    }
+ 
+
+    //  打印棋盘（限制在有效范围内，避免越界）
+    int totalCells = userBoard.size() + 3;
+    int maxValidIndex = min(totalCells, size * size); // 防止越界
+
+
+    cout << "该道具卡使用结果如下,已回溯部分被校对，蚂蚁自动填充了3步，请继续作答" << endl;
+    for (int i = 0; i < maxValidIndex ;i++)
+    {
+        if (obstacleBoard[i] == '#')
+        {
+            cout << "#";
+        }
+        else
+        {
+            cout << answerBoard[i];
+        }
+
+        // 控制空格和换行：每行前三个字符后加空格，第四个字符后换行
+        if ((i + 1) % 4 == 0)  // 每行的最后一个字符后换行
+        {
+            cout << endl;
+        }
+        else  // 非行末字符后加空格
+        {
+            cout << " ";
+        }
+    }
+    cout << endl;
+}
+
+
+//暴力拆迁道具卡
+void funMode::Destroy()
+{
+    cout << "正在使用暴力拆迁道具卡..." << endl;
+    string choice1;
+    cout << "是否开始拆除障碍柱？（yes/no）" << endl;
+    cin >> choice1;
+    while (choice1 == "yes")
+    {
+        cout << "请输入你想拆除障碍柱的位置坐标" << endl;
+        int x = 0, y = 0;
+        cin >> x >> y;
+        obstacle[x][y] = 0;
+        cout << "原位置障碍柱被拆除，默认为白格" << endl;
+        cout << "是否继续拆除？（yes/no）" << endl;
+        cin >> choice1;
+    }
+    cout << "正在更新题目和答案..." << endl;
+
+    //再次生成觉醒之路题目
+    generateAwakenRoad();
+}
+
 
 // 扭曲世界模式（电脑出题） 
 void funMode::TwistedWorld() {
@@ -450,14 +913,15 @@ void funMode::TwistedWorld() {
     for (int i = 0; i < size; i++) {
         realOriginalBoard[i] = new int[size];
         for (int j = 0; j < size; j++) {
-            realOriginalBoard[i][j] = originalBoard[i][j];
+            realOriginalBoard[i][j] = originalBoard[i][j];//提前保存正确的初始棋盘
         }
     }
 
     int maxAttempts = 1000; // 最大尝试次数
-    int attempts = 0;
-    while (!simulateTwistedWorld() && attempts < maxAttempts) {
-        resetAnt();
+    int attempts = 1;
+    while (!simulateTwistedWorld() && attempts < maxAttempts)//利用board进行模拟
+    {
+        resetAnt();//重置蚂蚁的初始位置、初始朝向、步数
         attempts++;
     }
 
@@ -469,18 +933,20 @@ void funMode::TwistedWorld() {
         delete[] realOriginalBoard;
         return;
     }
-
+    std::cout << "有解题目已生成，尝试" << attempts << "次" << std::endl;
     // 显示题目
-    generateTwistedQuestion();
+    generateTwistedQuestion();//打印模拟完的board和其他题目信息
 
     // 获取用户答案
-    inputBoard(originalBoard);
+    inputBoard(originalBoard);//修改成员变量originalBoard作为作答棋盘
 
     // 验证答案
-    if (compareBoards()) {
+    if (compareBoards(realOriginalBoard))
+    {
         std::cout << "恭喜！你的答案完全正确！\n";
     }
-    else {
+    else
+    {
         std::cout << "答案错误\n";
         std::cout << "正确初始棋盘为：\n";
         printBoard(realOriginalBoard);
@@ -492,7 +958,7 @@ void funMode::TwistedWorld() {
     delete[] realOriginalBoard;
 }
 
-// 碰壁走廊模式 
+// 碰壁走廊模式 （用户自定义）
 void funMode::AntsHit() {
     // 显示游戏介绍
     std::cout << "====欢迎来到碰壁走廊！===" << std::endl;
@@ -504,47 +970,97 @@ void funMode::AntsHit() {
     std::cout << std::endl;
     std::cout << "请注意：本模式下，你可以自定义含障碍的题目" << std::endl;
 
-    // 生成用户自定义题目
-    generateUserQuestion();
+    // 生成用户自定义题目,判断是否有解
+    if (generateUserQuestion())
+    {
+        // 获取用户答案
+        inputBoard(originalBoard);//修改originalBoard作为用户作答棋盘
 
-    // 模拟蚂蚁移动，计算正确的初始棋盘
-    if (!simulateAntsHit()) {
-        std::cout << "题目无效，无法模拟蚂蚁移动！" << std::endl;
-        return;
-    }
-
-    // 获取用户答案
-    inputBoard(originalBoard);
-
-    // 验证答案
-    if (compareBoards()) {
-        std::cout << "恭喜！你的答案完全正确！\n";
-    }
-    else {
-        std::cout << "答案错误\n";
-        std::cout << "正确初始棋盘为：\n";
-        printBoard(correctInitialBoard); // 使用正确的初始棋盘
+        // 验证答案
+        if (compareBoards(board))
+        {
+            std::cout << "恭喜！你的答案完全正确！\n";
+        }
+        else
+        {
+            std::cout << "答案错误\n";
+            std::cout << "正确初始棋盘为：\n";
+            printBoard(board);
+        }
     }
 }
 
+//觉醒之路模式（电脑出题）
+void funMode::ToolsRoad()
+{
+    // 显示游戏介绍
+    std::cout << "====欢迎来到觉醒之路！===" << std::endl;
+    std::cout << "——————————————————————————————————————————" << std::endl;
+    std::cout << "背景:兰顿蚂蚁发现回溯越来越难，觉醒了外挂" << std::endl;
+    std::cout << "新模式：答题获取道具卡，在游戏进行的过程中可使用来简化游戏" << std::endl;
+    std::cout << "在新模式下，答对的题越多，获得的道具卡就越多，快来尝试吧！" << std::endl;
+    std::cout << "蚂蚁走过n步形成蚁行图，你要根据蚁行图回溯出棋盘初始状态方为作答完毕" << std::endl;
+    std::cout << "——————————————————————————————————————————" << std::endl;
+    std::cout << std::endl;
+    std::cout << "请注意：本模式下，电脑随机生成含障碍的有解题目供你作答" << std::endl;
+    cout << endl;
+    //进入答题环节，获取道具卡
+    answerQues();
+    //生成觉醒之路题目
+    if (generateAwakenRoad())
+    {
+        //选择道具
+        chooseTool();
+        inputBoard(originalBoard);
+        if (compareBoards(board))
+        {
+            cout << "恭喜你回答正确！" << endl;
+            return;
+        }
+        else
+        {
+            cout << "答案错误\n";
+            cout << "正确初始棋盘为：\n";
+            printBoard(board);
+            return;
+        }
+    }
+}
+
+
 // 趣味模式选图
-void funMode::chooseMap() {
+void funMode::chooseMap()
+{
     std::cout << "欢迎来到趣味模式！" << std::endl;
     std::cout << "请选择地图" << std::endl;
     std::cout << "1. 扭曲世界" << std::endl;
     std::cout << "2. 碰壁走廊" << std::endl;
+    std::cout << "3. 觉醒之路" << std::endl;
     std::cout << "请输入你想进入的地图对应的序号" << std::endl;
 
     int choice;
     std::cin >> choice;
 
-    switch (choice) {
+    switch (choice)
+    {
     case 1:
-        TwistedWorld();
+    {
+        funMode mode1;
+        mode1.TwistedWorld();
         break;
+    }
     case 2:
-        AntsHit();
+    {
+        funMode mode2;
+        mode2.AntsHit();
         break;
+    }
+    case 3:
+    {
+        funMode mode3(4);
+        mode3.ToolsRoad();
+        break;
+    }
     default:
         std::cout << "无效选择！" << std::endl;
     }
