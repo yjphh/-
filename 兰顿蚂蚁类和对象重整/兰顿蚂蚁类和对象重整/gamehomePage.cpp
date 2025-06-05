@@ -2,8 +2,22 @@
 #include <iostream>
 #include<fstream>
 #include<conio.h>
+#include <windows.h>  // 包含 ShellExecute 头文件
 
 GameHomepage::GameHomepage() {}
+
+// 启动程序函数（参数：程序路径、参数）
+bool startProgram(const wchar_t* filePath, const wchar_t* args = NULL) {
+    HINSTANCE hInstance = ShellExecute(
+        NULL,
+        L"open",
+        filePath,
+        args,
+        NULL,
+        SW_SHOWNORMAL  // 窗口显示模式
+    );
+    return (int)hInstance > 32;  // 成功启动返回 true
+}
 
 std::string getPassword()
 {
@@ -113,6 +127,7 @@ void GameHomepage::chooseMode(User& user)
     std::cout << "1. 自由模式" << std::endl;
     std::cout << "2. 闯关模式" << std::endl;
     std::cout << "3. 趣味模式" << std::endl;
+    std::cout << "4. 对抗模式" << std::endl;
     std::cout << "请输入你想参加的模式对应的序号" << std::endl;
     std::cout << std::endl;
     int choice;
@@ -202,6 +217,79 @@ void GameHomepage::chooseMode(User& user)
             case 1:
             {
                 funmode.chooseMap();
+                break;
+            }
+            case 2:
+            {
+                GameHomepage homepage2;
+                homepage2.beginGame();
+                shouldExit = true;
+                break;
+            }
+            case 3:
+            {
+                std::cout << "游戏已退出，欢迎下次再来！" << std::endl;
+                shouldExit = true;
+                break;
+            }
+            }
+        }
+        break;
+    }
+    case 4:
+    {
+        // 启动服务端（替换为实际路径）
+        const wchar_t* serverPath = L"D:\\VSLearn\\AntSever\\x64\\Debug\\AntSever.exe";
+        startProgram(serverPath);
+        int a = 0;
+        std::cout << "作为用户1参与游戏，请输入1" << std::endl;
+        std::cin >> a;
+        const wchar_t* clientPath = L"D:\\VSLearn\\AntClient\\x64\\Debug\\AntClient.exe";
+        if (a == 1)
+        {
+            // 启动客户端1（替换为实际路径）
+            startProgram(clientPath, L"Client1");  // 可选参数传递给客户端
+        }
+        std::cout << "作为用户2参与游戏，请输入2" << std::endl;
+        std::cin >> a;
+        if (a == 2)
+        {
+            // 启动客户端2
+            startProgram(clientPath, L"Client2");
+        }
+
+        while (!shouldExit)
+        {
+            std::cout << "请输入接下来的操作：" << std::endl;
+            std::cout << "1、再玩一次本模式" << std::endl;
+            std::cout << "2、退出该模式并回到主页面 " << std::endl;
+            std::cout << "3、退出游戏 " << std::endl;
+            std::cin >> input;
+            switch (input)
+            {
+            case 1:
+            {
+                // 启动服务端
+                startProgram(serverPath);
+
+                // 启动客户端1
+                int a = 0;
+                std::cout << "作为用户1参与游戏，请输入1" << std::endl;
+                std::cin >> a;
+                if (a == 1)
+                {
+                    // 启动客户端1（替换为实际路径）
+                    startProgram(clientPath, L"Client1");  // 可选参数传递给客户端
+                }
+
+                std::cout << "作为用户2参与游戏，请输入2" << std::endl;
+                std::cin >> a;
+                if (a == 2)
+                {
+                    // 启动客户端2
+                    startProgram(clientPath, L"Client2");
+                }
+
                 break;
             }
             case 2:
