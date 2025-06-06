@@ -183,12 +183,13 @@ void drawBoard(const Board& board, bool isProblem, int steps, const string& user
     EndBatchDraw();
 }
 
-void showResult(const vector<string>& results) {
+void showResult(const vector<string>& results, const Board& answerBoard) {
     BeginBatchDraw();
     cleardevice();
     settextstyle(24, 0, L"黑体");
     settextcolor(BLACK);
 
+    // 左侧结果区域
     outtextxy(50, 50, L"游戏结果:");
 
     wstring player1Result = string2wstring(results[0]) + L": " +
@@ -204,6 +205,26 @@ void showResult(const vector<string>& results) {
     outtextxy(50, 150, player2Result.c_str());
     outtextxy(50, 200, winnerText.c_str());
     outtextxy(50, 250, L"点击空格退出...");
+
+    // 右侧答案棋盘区域 - 向左调整位置
+    int rightPanelX = WINDOW_WIDTH / 2 - 35;
+    outtextxy(rightPanelX, 50, L"答案棋盘:");
+
+    // 绘制棋盘边框
+    setlinecolor(BLACK);
+    setlinestyle(PS_SOLID, 3);
+    rectangle(rightPanelX - 5, 80, rightPanelX + BOARD_SIZE * CELL_SIZE + 5, 80 + BOARD_SIZE * CELL_SIZE + 5);
+
+    // 绘制棋盘格子
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            setfillcolor(answerBoard.grid[i][j] ? WHITE : BLACK);
+            setlinecolor(DARKGRAY);
+            setlinestyle(PS_SOLID, 1);
+            fillrectangle(rightPanelX + j * CELL_SIZE, 80 + i * CELL_SIZE,
+                rightPanelX + (j + 1) * CELL_SIZE, 80 + (i + 1) * CELL_SIZE);
+        }
+    }
 
     EndBatchDraw();
 }
@@ -373,7 +394,7 @@ int main() {
         results.push_back(resultStr);
 
         if (results.size() >= 7) {
-            showResult(results);
+            showResult(results, answerBoard);
             _getch();
         }
         else {
