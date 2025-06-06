@@ -132,6 +132,14 @@ bool funMode::compareBoards(int** arr)//传入的参数是棋盘初始状态，即正确答案
 {
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
+            if (obstacle[i][j] == '#')
+            {
+				arr[i][j] = 0; // 障碍格子默认为白格
+            }
+        }
+    }
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
             if (originalBoard[i][j] != arr[i][j]) return false;//这里的originalBoard是用户输入的作答棋盘
         }
     }
@@ -727,7 +735,7 @@ void funMode::BackOpera()
 {
     cout << "正在使用落子有悔道具卡..." << endl;
     inputBoard(originalBoard);
-    if (compareBoards(board))
+    if (compareBoards(board))//11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
     {
         cout << "提前恭喜你回答正确！不需要使用该卡了" << endl;
         return;
