@@ -2,13 +2,14 @@
 #include "gameHomepage.h"
 #include <cstdlib>
 #include <ctime>
-#include<windows.h>
+#include<windows.h>// 调用函数SetConsoleTextAttribute设置文本颜色
 #include<fstream>
 #include<cmath>
 #include<sstream>
-#include<iomanip>
+#include<iomanip>//流输出格式控制符
 
-void TurnRight(Direction& heading) {
+void TurnRight(Direction& heading)
+{
     switch (heading) {
     case DOWN:
         heading = LEFT;
@@ -25,7 +26,8 @@ void TurnRight(Direction& heading) {
     }
 }
 
-void TurnLeft(Direction& heading) {
+void TurnLeft(Direction& heading)
+{
     switch (heading) {
     case DOWN:
         heading = RIGHT;
@@ -177,7 +179,12 @@ const std::vector<problemBank>& freedomMode::getBank()const
 
 void freedomMode::viewProblem(int i,std::vector<problemBank>bank)
 {
-    int c = bank[i-1].finalDirec;
+	if (i <= 0 || i > bank.size())
+	{
+		std::cout << "无效的题目序号！" << std::endl;
+		return;
+	}
+    int c = bank[i - 1].finalDirec;
     std::string c1;
     switch (c)
     {
@@ -202,7 +209,6 @@ void freedomMode::viewProblem(int i,std::vector<problemBank>bank)
         break;
     }
     }
-
     std::cout << "题目" << i <<"信息如下" <<std::endl;
     std::cout << "提供者: " << bank[i-1].username << std::endl;
     std::cout << "步数: " << bank[i-1].steps << std::endl;
@@ -233,7 +239,8 @@ void freedomMode::viewProblem(int i,std::vector<problemBank>bank)
 }
 
 
-freedomMode::freedomMode(int size, int steps) : size(size), steps(steps) {
+freedomMode::freedomMode(int size, int steps) : size(size), steps(steps)
+{
     board = new bool[size * size];
     finalBoard = new bool[size * size];
     initialBoard = new bool[size * size];
@@ -242,7 +249,8 @@ freedomMode::freedomMode(int size, int steps) : size(size), steps(steps) {
     initializeBoard(initialBoard);
     srand(time(0));
     // 随机设置棋盘格子(0白格，1黑格)
-    for (int i = 0; i < size * size; ++i) {
+    for (int i = 0; i < size * size; ++i)
+    {
         board[i] = rand() % 2 == 0;
         initialBoard[i] = board[i];
     }
@@ -258,23 +266,28 @@ freedomMode::~freedomMode() {
     delete[] initialBoard;
 }
 
-void freedomMode::initializeBoard(bool* board) {
-    for (int i = 0; i < size * size; ++i) {
+void freedomMode::initializeBoard(bool* board)
+{
+    for (int i = 0; i < size * size; ++i)
+    {
         board[i] = false;
     }
 }
 
-void freedomMode::copyBoard(bool* src, bool* dest) {
+void freedomMode::copyBoard(bool* src, bool* dest) 
+{
     for (int i = 0; i < size * size; ++i) {
         dest[i] = src[i];
     }
 }
 
-int freedomMode::getIndex(int x, int y) {
+int freedomMode::getIndex(int x, int y)
+{
     return x * size + y;
 }
 
-bool freedomMode::moveAnt(int& x, int& y, Direction& heading) {
+bool freedomMode::moveAnt(int& x, int& y, Direction& heading)
+{
     int index = getIndex(x, y);
     if (board[index]) {
         TurnLeft(heading);
@@ -285,7 +298,8 @@ bool freedomMode::moveAnt(int& x, int& y, Direction& heading) {
         board[index] = true;
     }
 
-    switch (heading) {
+    switch (heading)
+    {
     case UP:
         if (x - 1 < 0) return false;
         x--;
@@ -306,7 +320,8 @@ bool freedomMode::moveAnt(int& x, int& y, Direction& heading) {
     return true;
 }
 
-bool freedomMode::isValidInitialPosition(int x, int y, Direction heading) {
+bool freedomMode::isValidInitialPosition(int x, int y, Direction heading) 
+{
     copyBoard(board, finalBoard);
     for (int i = 0; i < steps; ++i) {
         if (!moveAnt(x, y, heading)) {

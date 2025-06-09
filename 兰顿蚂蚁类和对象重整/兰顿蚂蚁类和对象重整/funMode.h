@@ -76,6 +76,17 @@ private:
     //暴力拆迁道具卡
     void Destroy();
 
+
+    // 程序员自定义起始位置（示例：中心位置(0,0)，对应索引3）
+    int startX = 0;
+    int startY = 0;
+    // 定义向量坐标（A-F六个方向）
+    static const std::vector<std::pair<int, int>> DIRECTIONS;
+    // 坐标转换为一维数组索引
+    int coordToIndex(int x, int y) const;
+    // 一维数组索引转换为坐标
+    std::pair<int, int> indexToCoord(int idx) const;
+
 public:
     // 构造函数1，用来初始化扭曲世界和碰壁长廊
     funMode();
@@ -89,8 +100,20 @@ public:
     void AntsHit();
     // 觉醒之路模式
     void ToolsRoad();
+	// 六方通道模式
+	void HexagonalPath();
+
     // 趣味模式选图
     void chooseMap();
+
+    // 六方通道模式模拟蚂蚁移动
+    std::vector<int> simulateAntMovement(std::vector<int>& initialGrid,
+        int& startX, int& startY,
+        const std::vector<int>& directions) const;
+    // 打印六边形格子状态
+    void printHexagon(const std::vector<int>& grid) const;
+    //六方通道模式答题的辅助图片
+    void displayImage(const string& imagePath);
 };
 
 #endif // FUNMODE_H      

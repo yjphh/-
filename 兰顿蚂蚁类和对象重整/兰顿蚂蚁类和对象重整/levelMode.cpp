@@ -1,12 +1,12 @@
 #include"levelMode.h"
 #include"gameHomepage.h"
 #include <iostream> 
-#include<windows.h>
+#include<windows.h>// SetConsoleTextAttribute设置文本颜色的头文件
 #include<iomanip>
 #include<vector>
 #include<fstream>
 #include<sstream>
-#include<map>
+#include<map>//容器map,从用户名映射到用户游戏记录，用于制作排名榜
 #include<algorithm>
 
 
@@ -421,7 +421,7 @@ bool LevelMode::isBetter(const GameRecord& current, const GameRecord& others)
     return false;
 }
 
-//返回一个数组，该数组是所有用户在该关卡和难度下的最佳记录
+//返回一个数组，该数组存储所有用户在该关卡和难度下的最佳记录
 std::vector<GameRecord> LevelMode::findAllBestRecords(const std::vector<GameRecord>& records)
 {
     std::map<std::string, GameRecord>bestRecord;//用映射关系存储不同用户的最佳记录
@@ -440,7 +440,7 @@ std::vector<GameRecord> LevelMode::findAllBestRecords(const std::vector<GameReco
     {
         resultList.push_back(pair.second);
     }
-    return resultList;
+	return resultList;//返回所有用户的最佳记录
 }
 
 void LevelMode::bubbleSort(std::vector<GameRecord>& records, int n)
@@ -653,7 +653,7 @@ void LevelMode::chooseStage(User& user)
     std::cout << "背景与规则和自由模式一样" << std::endl;
     std::cout << "设置了3个关卡和3种难度" << std::endl;
     std::cout << "不同关卡对应不同的棋盘大小，不同难度对应不同的回溯步数" << std::endl;
-    std::cout << "用户结束游戏后可选择性保存、删除、查看个人记录，保存的个人最佳游戏记录会进入排名榜" << std::endl;
+    std::cout << "用户结束游戏后可选择性保存、查看、删除个人记录，保存的个人最佳游戏记录会进入排名榜" << std::endl;
     std::cout << "蚂蚁走过n步形成蚁行图，你要根据蚁行图回溯出棋盘初始状态方为作答完毕" << std::endl;
     std::cout << "——————————————————————————————————————————" << std::endl;
     std::cout << std::endl;

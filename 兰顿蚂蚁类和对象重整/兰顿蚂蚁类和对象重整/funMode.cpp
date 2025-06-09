@@ -4,6 +4,9 @@
 #include <iostream>
 #include <string>
 #include<algorithm>//reverse
+#include <graphics.h>// EasyX 图形库头文件
+#include<Windows.h>
+#include <conio.h>
 using namespace std;
 
 // 构造函数：初始化通用属性
@@ -51,8 +54,6 @@ void funMode::initObstacle(int n)//随机设置指定数量的障碍，觉醒之路模式
         }
     }
 }
-
-
 
 // 初始化棋盘
 void funMode::initBoard() {
@@ -678,7 +679,7 @@ bool funMode::generateAwakenRoad()
     return true;
 }
 
-// 选择道具卡（新）
+// 选择道具卡
 void funMode::chooseTool() {
     if (obtainedTools.empty()) {
         cout << "你还没有获得任何道具卡！\n";
@@ -709,7 +710,8 @@ void funMode::chooseTool() {
         if (cin.get() == '\n') break;
     }
 
-    for (int idx : selectedIndices) {
+    for (int idx : selectedIndices) 
+    {
         if (idx < 1 || idx > toolOptions.size()) {
             cout << "无效序号：" << idx << endl;
             continue;
@@ -735,7 +737,7 @@ void funMode::BackOpera()
 {
     cout << "正在使用落子有悔道具卡..." << endl;
     inputBoard(originalBoard);
-    if (compareBoards(board))//11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+    if (compareBoards(board))
     {
         cout << "提前恭喜你回答正确！不需要使用该卡了" << endl;
         return;
@@ -822,8 +824,6 @@ void funMode::CreatCons()
     userBoard.clear();
     answerBoard.clear();
     obstacleBoard.clear();
-
-
 
     inputBoard(userBoard);
     cout << "正在使用蚂蚁有灵道具卡..." << endl;
@@ -1035,6 +1035,145 @@ void funMode::ToolsRoad()
     }
 }
 
+// 初始化静态成员变量
+const std::vector<std::pair<int, int>> funMode::DIRECTIONS = {
+    {-1, 1}, {1, 1}, {-2, 0}, {2, 0}, {-1, -1}, {1, -1} // OA, OB, OC, OD, OE, OF
+};
+
+int funMode::coordToIndex(int x, int y) const 
+{
+    if (x == -1 && y == 1) return 0;  // 顶部左
+    if (x == 1 && y == 1) return 1;   // 顶部右
+    if (x == -2 && y == 0) return 2;  // 左
+    if (x == 0 && y == 0) return 3;   // 中
+    if (x == 2 && y == 0) return 4;   // 右
+    if (x == -1 && y == -1) return 5; // 底部左
+    if (x == 1 && y == -1) return 6;  // 底部右
+    return -1; // 无效坐标
+}
+
+std::pair<int, int> funMode::indexToCoord(int idx) const {
+    std::vector<std::pair<int, int>> coords = {
+        {-1, 1}, {1, 1}, {-2, 0}, {0, 0}, {2, 0}, {-1, -1}, {1, -1}
+    };
+    return coords[idx];
+}
+
+std::vector<int> funMode::simulateAntMovement(std::vector<int>& initialGrid,
+    int& startX, int& startY,
+    const std::vector<int>& directions) const {
+    std::vector<int> grid = initialGrid;
+    int x = startX, y = startY;
+
+    for (int dir : directions) {
+        int idx = coordToIndex(x, y);
+        if (idx == -1) break; // 无效坐标，退出模拟
+
+        // 翻转当前格子
+        grid[idx] = !grid[idx];
+
+        // 移动到下一个格子
+        x += DIRECTIONS[dir].first;
+        y += DIRECTIONS[dir].second;
+    }
+	startX = x;
+	startY = y;
+    return grid;
+}
+
+void funMode::printHexagon(const std::vector<int>& grid) const {
+    std::cout << " " << grid[0] << " " << grid[1] << std::endl;
+    std::cout << grid[2] << " " << grid[3] << " " << grid[4] << std::endl;
+    std::cout << " " << grid[5] << " " << grid[6] << std::endl;
+}
+
+void funMode::displayImage(const string& imagePath)
+{
+    // Convert std::string to std::wstring
+    int len = MultiByteToWideChar(CP_UTF8, 0, imagePath.c_str(), -1, NULL, 0);
+    std::wstring wideImagePath(len, L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, imagePath.c_str(), -1, &wideImagePath[0], len);
+
+    // Load image
+    IMAGE img;
+    loadimage(&img, wideImagePath.c_str(), 0, 0, true);
+
+    // Get window and image dimensions
+    int winWidth = getwidth();
+    int winHeight = getheight();
+    int imgWidth = img.getwidth();
+    int imgHeight = img.getheight();
+
+    // Calculate centered position
+    int x = (winWidth - imgWidth) / 2;
+    int y = (winHeight - imgHeight) / 2;
+
+    // Display image
+    putimage(x, y, &img);
+}
+
+void funMode::HexagonalPath()
+{
+    // 程序员自定义初始状态
+    std::vector<int> initialGrid = { 0, 1, 1, 0, 0, 1, 0 };
+
+    // 程序员自定义三个移动方向
+    std::vector<int> directions = { 2, 5, 3 }; // 
+
+    // 模拟蚂蚁移动
+    std::vector<int> finalGrid = simulateAntMovement(initialGrid, startX, startY, directions);
+
+    // 显示题目
+    std::cout << "====欢迎来到六方通道！===" << std::endl;
+    std::cout << "——————————————————————————————————————————" << std::endl;
+    std::cout << "背景:兰顿蚂蚁掉进了一个格子都是六边形的棋盘，每一次有6个前进方向可以选择" << std::endl;
+    std::cout << "新模式：题目会提供蚂蚁的最终位置和蚂蚁移动时使用的向量，根据提示图作答" << std::endl;
+    std::cout << "蚂蚁走过n步形成蚁行图，你要根据蚁行图回溯出棋盘初始状态方为作答完毕" << std::endl;
+    std::cout << "——————————————————————————————————————————" << std::endl;
+    std::cout << std::endl;
+    std::cout << "请注意：本模式下，电脑生成有解题目供你作答" << std::endl;
+    cout << endl;
+
+
+    // 初始化图形窗口
+    initgraph(1000, 750, EX_SHOWCONSOLE);   // 创建一个800x600的窗口
+    setbkcolor(WHITE);     // 设置背景色为白色
+    cleardevice();         // 清屏
+
+	std::string imagePath = "C:\\Users\\w\\Desktop\\tip.png"; 
+    // 显示图片
+    displayImage(imagePath);
+
+    std::cout << "最终格子状态:" << std::endl;
+    printHexagon(finalGrid);
+    std::cout << "蚂蚁最终坐标: (" << startX << ", " << startY << ")" << std::endl;
+    std::cout << "蚂蚁移动先后使用的向量坐标(0-5对应OA-OF): ";
+    for (int dir : directions) {
+        std::cout << dir << " ";
+    }
+    std::cout << std::endl;
+
+    // 获取用户答案
+    std::vector<int> userAnswer(7);
+    std::cout << "请输入初始棋盘： ";
+    for (int i = 0; i < 7; ++i) {
+        std::cin >> userAnswer[i];
+    }
+
+    // 检查答案
+    bool correct = true;
+    for (int i = 0; i < 7; ++i) {
+        if (userAnswer[i] != initialGrid[i]) {
+            correct = false;
+            break;
+        }
+    }
+    std::cout << "正确答案: ";
+    std::cout << endl;
+	printHexagon(initialGrid);
+    std::cout << (correct ? "恭喜，回答正确！" : "回答错误，再试一次！") << std::endl;
+
+}
 
 // 趣味模式选图
 void funMode::chooseMap()
@@ -1044,6 +1183,7 @@ void funMode::chooseMap()
     std::cout << "1. 扭曲世界" << std::endl;
     std::cout << "2. 碰壁走廊" << std::endl;
     std::cout << "3. 觉醒之路" << std::endl;
+    std::cout << "4. 六方通道" << std::endl;
     std::cout << "请输入你想进入的地图对应的序号" << std::endl;
 
     int choice;
@@ -1067,6 +1207,12 @@ void funMode::chooseMap()
     {
         funMode mode3(4);
         mode3.ToolsRoad();
+        break;
+    }
+    case 4:
+    {
+        funMode mode4;
+        mode4.HexagonalPath();
         break;
     }
     default:

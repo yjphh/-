@@ -1,13 +1,13 @@
 #include "gameHomepage.h"
 #include <iostream>
 #include<fstream>
-#include<conio.h>
 #include <windows.h>  // 包含 ShellExecute 头文件
 
 GameHomepage::GameHomepage() {}
 
-// 启动程序函数（参数：程序路径、参数）
-bool startProgram(const wchar_t* filePath, const wchar_t* args = NULL) {
+// 启动程序函数（参数：程序路径、参数）,用于打开外部服务端和客户端项目进行对抗模式
+bool startProgram(const wchar_t* filePath, const wchar_t* args = NULL)
+{
     HINSTANCE hInstance = ShellExecute(
         NULL,
         L"open",
@@ -17,30 +17,6 @@ bool startProgram(const wchar_t* filePath, const wchar_t* args = NULL) {
         SW_SHOWNORMAL  // 窗口显示模式
     );
     return (int)hInstance > 32;  // 成功启动返回 true
-}
-
-std::string getPassword()
-{
-    std::string password;
-    char ch;
-    while ((ch = _getch()) != '\r')//用户按下回车键时停止输入
-    {
-        if (ch == '\b')//处理退格键
-        {
-            if (!password.empty())
-            {
-                password.pop_back();//删除最后一个字符
-                std::cout << "\b \b";//回退光标
-            }
-        }
-        else
-        {
-            password += ch;
-            std::cout << '*';
-        }
-    }
-    std::cout << std::endl;
-    return password;
 }
 
 void GameHomepage::beginGame()
@@ -73,16 +49,16 @@ void GameHomepage::beginGame()
             else
             {
                 std::cout << "请输入密码" << std::endl;
-                std::string password2 = getPassword();
-                User user(username2);
+                User user(username2);// 创建用户对象
+                std::string password2 = user.getpassword();
                 user.userRegister(username2, password2);
                 std::cout << "登录中：" << std::endl;
                 std::cout << "请输入用户名" << std::endl;
                 std::string username;
                 std::cin >> username;
                 std::cout << "请输入密码" << std::endl;
-                std::string password = getPassword();
                 user = User(username);
+                std::string password = user.getpassword();
                 if (user.userLogin(password))
                 {
                     chooseMode(user);
@@ -98,8 +74,8 @@ void GameHomepage::beginGame()
             std::string username;
             std::cin >> username;
             std::cout << "请输入密码" << std::endl;
-            std::string password = getPassword();
             User user(username);
+            std::string password = user.getpassword();
             if (user.userLogin(password))
             {
                 chooseMode(user);
@@ -132,7 +108,8 @@ void GameHomepage::chooseMode(User& user)
     std::cout << std::endl;
     int choice;
     std::cin >> choice;
-    switch (choice) {
+    switch (choice) 
+    {
     case 1:
     {
         freedommode.freeMode( user);

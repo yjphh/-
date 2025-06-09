@@ -4,10 +4,10 @@
 #include <ctime>
 #include <string>
 #include <sstream>
-#include<conio.h>
-#include <chrono>
+#include<conio.h>//密码加密函数的头文件
+#include <chrono>//获取当前时间
 #include<iomanip>
-#include <cstdio> // 用于remove和rename函数
+#include <cstdio> // 用于remove和rename函数,删除个人游戏记录时用到
 
 
 std::string User::getpassword() 
@@ -172,7 +172,7 @@ bool User::userLogin( std::string& _password)
     return false;
 }
 
-void User::addRecord(const GameRecord& record) 
+void User::addRecord(const GameRecord& record) //把游戏记录添加到用户的记录中，并保存到文件中
 {
 
     GameRecord recordwithTime = record;
